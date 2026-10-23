@@ -69,8 +69,11 @@ html, body {
 
 .botones {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  row-gap: 4px;
   padding: 6px 0;
+  white-space: nowrap;
 }
 
 button {
