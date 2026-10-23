@@ -18,7 +18,7 @@ permissions:
 
 env:
   IMAGEN: ghcr.io/jcastillod/ceneval-api
-  GRUPO: wonderful
+  SWA: jolly-plant-02079530f
 
 jobs:
   pruebas:
@@ -87,12 +87,12 @@ jobs:
       - name: Grupo de recursos
         if: steps.secretos.outputs.listo == 'true'
         run: |
-          RG=$(az group list --query "[].name" -o tsv | grep -i "$GRUPO" | head -n 1)
+          RG=$(az staticwebapp list --query "[?starts_with(defaultHostname, '$SWA')].resourceGroup | [0]" -o tsv)
           if [ -z "$RG" ]; then
-            echo "::error::No encontre un grupo de recursos con '$GRUPO'. Hay: $(az group list --query '[].name' -o tsv | tr '\n' ' ')"
+            echo "::error::No encontre la SWA $SWA. Grupos: $(az group list --query '[].name' -o tsv | tr '\n' ',')"
             exit 1
           fi
-          echo "::notice::Grupo de recursos $RG"
+          echo "::notice::Grupo de recursos $RG, SWA $(az staticwebapp list -g "$RG" --query '[].defaultHostname' -o tsv | tr '\n' ' ')"
           echo "RG=$RG" >> "$GITHUB_ENV"
 
       - name: Registrar Microsoft.App
