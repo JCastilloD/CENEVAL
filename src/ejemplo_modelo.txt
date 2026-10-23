@@ -1,0 +1,6 @@
+{\model{x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}}
+\normal a{10, 0.5}
+\distrib b{{10, 0.5}{15, 0.3}{20, 0.2}}
+\uniform c{-20, 30}
+\iter {1000000}
+\response {avg, min, max}}

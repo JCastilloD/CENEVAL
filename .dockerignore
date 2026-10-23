@@ -1,0 +1,7 @@
+.git
+.github
+web
+infra
+tests
+**/__pycache__
+*.md

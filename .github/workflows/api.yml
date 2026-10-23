@@ -1,0 +1,131 @@
+name: api
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "api/**"
+      - "tests/**"
+      - "infra/**"
+      - "Dockerfile"
+      - ".github/workflows/api.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGEN: ghcr.io/jcastillod/ceneval-api
+  GRUPO: wonderful
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r api/requirements.txt
+      - run: python -m unittest tests.correr_pruebas -v
+
+  imagen:
+    needs: pruebas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGEN }}:${{ github.sha }}
+            ${{ env.IMAGEN }}:latest
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+      - name: La imagen debe ser publica
+        run: |
+          docker logout ghcr.io
+          if ! docker manifest inspect "$IMAGEN:${{ github.sha }}" > /dev/null; then
+            echo "::error::La imagen quedo privada. En GitHub: Packages > ceneval-api > Package settings > Change visibility > Public"
+            exit 1
+          fi
+
+  azure:
+    needs: imagen
+    runs-on: ubuntu-latest
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Secretos
+        id: secretos
+        run: |
+          if [ -z "$AZURE_CLIENT_SECRET" ] || [ -z "$AZURE_CLIENT_ID" ]; then
+            echo "::warning::Faltan los secretos de Azure, no se despliega"
+            echo "listo=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "listo=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Entrar a Azure
+        if: steps.secretos.outputs.listo == 'true'
+        run: |
+          az login --service-principal -u "$AZURE_CLIENT_ID" -p "$AZURE_CLIENT_SECRET" --tenant "$AZURE_TENANT_ID" --output none
+          az account set --subscription "$AZURE_SUBSCRIPTION_ID"
+
+      - name: Grupo de recursos
+        if: steps.secretos.outputs.listo == 'true'
+        run: |
+          RG=$(az group list --query "[].name" -o tsv | grep -i "$GRUPO" | head -n 1)
+          if [ -z "$RG" ]; then
+            echo "::error::No encontre un grupo de recursos con '$GRUPO'. Hay: $(az group list --query '[].name' -o tsv | tr '\n' ' ')"
+            exit 1
+          fi
+          echo "::notice::Grupo de recursos $RG"
+          echo "RG=$RG" >> "$GITHUB_ENV"
+
+      - name: Registrar Microsoft.App
+        if: steps.secretos.outputs.listo == 'true'
+        run: az provider register --namespace Microsoft.App --wait || echo "::warning::No se pudo registrar Microsoft.App"
+
+      - name: Desplegar
+        if: steps.secretos.outputs.listo == 'true'
+        run: |
+          URL=$(az deployment group create -g "$RG" -n ceneval-api -f infra/main.bicep \
+            -p imagen="$IMAGEN:${{ github.sha }}" \
+            --query properties.outputs.apiUrl.value -o tsv)
+          echo "::notice::API en $URL"
+          echo "URL=$URL" >> "$GITHUB_ENV"
+
+      - name: Probar
+        if: steps.secretos.outputs.listo == 'true'
+        run: |
+          for i in $(seq 1 30); do
+            curl -fsS "$URL/" && break
+            sleep 10
+          done
+          python3 - <<'EOF'
+          import json, os, time, urllib.request
+          url = os.environ["URL"]
+          modelo = open("src/ejemplo_modelo.txt", encoding="utf-8").read()
+          def post(ruta, datos):
+              r = urllib.request.Request(url + ruta, json.dumps(datos).encode(), {"Content-Type": "application/json"})
+              return urllib.request.urlopen(r, timeout=120)
+          c = json.loads(post("/compilacion/compilar", {"modelo": modelo}).read())
+          inicio = time.time()
+          eventos = [json.loads(l) for l in post("/simulacion/simular", {"script": c["script"], "firma": c["firma"], "semilla": 2026}) if l.strip()]
+          final = eventos[-1]
+          print(f"::notice::{len(eventos)} eventos en {time.time() - inicio:.1f} s, promedio {final['estadisticos']['avg']:.4f}, validas {final['validas']}")
+          assert final["tipo"] == "resultado"
+          EOF

@@ -1,0 +1,16 @@
+{
+  "name": "Simulaciones de Monte Carlo - Inteligencia Aplicada S.A.",
+  "short_name": "Monte Carlo",
+  "description": "Captura, valida y simula modelos de Monte Carlo",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f0f0f0",
+  "theme_color": "#ffb900",
+  "icons": [
+    { "src": "iconos/icono-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "iconos/icono-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "iconos/icono-mascara-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

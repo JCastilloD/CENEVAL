@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulaciones de Monte Carlo - Inteligencia Aplicada S.A.</title>
+<meta name="description" content="Cliente para capturar, validar y simular modelos de Monte Carlo">
+<meta name="theme-color" content="#ffb900">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="iconos/icono-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="iconos/icono-192.png">
+<link rel="stylesheet" href="estilos.css">
+<script src="config.js"></script>
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<main class="panel">
+  <label class="etiqueta modelo" for="editor">Modelo (lenguaje basado en LaTeX)</label>
+  <textarea id="editor" class="texto editor" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+
+  <div class="botones">
+    <button id="validar" type="button">Validar</button>
+    <button id="simular" type="button">Compilar y simular</button>
+    <label for="semilla" class="etiqueta-semilla">Semilla (opcional):</label>
+    <input id="semilla" type="text" inputmode="numeric" autocomplete="off">
+  </div>
+
+  <label class="etiqueta mensajes-titulo" for="mensajes">Mensajes</label>
+  <textarea id="mensajes" class="texto mensajes" readonly></textarea>
+
+  <div class="lienzo"><canvas id="figura"></canvas></div>
+
+  <div class="inferior">
+    <div id="barra" class="barra" role="progressbar"><div></div></div>
+    <div class="linea-estado">
+      <span id="estado">Listo.</span>
+      <span id="resultados"></span>
+    </div>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "mimeTypes": {
+    ".webmanifest": "application/manifest+json",
+    ".py": "text/plain",
+    ".woff2": "font/woff2"
+  },
+  "routes": [
+    { "route": "/sw.js", "headers": { "Cache-Control": "no-cache" } },
+    { "route": "/config.js", "headers": { "Cache-Control": "no-cache" } }
+  ]
+}
