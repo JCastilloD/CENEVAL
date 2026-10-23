@@ -102,8 +102,10 @@ jobs:
       - name: Desplegar
         if: steps.secretos.outputs.listo == 'true'
         run: |
+          ORIGENES=$(az staticwebapp list -g "$RG" --query "[].defaultHostname" -o tsv | sed 's|^|https://|' | paste -sd, -)
+          echo "::notice::Origenes permitidos ${ORIGENES:-*}"
           URL=$(az deployment group create -g "$RG" -n ceneval-api -f infra/main.bicep \
-            -p imagen="$IMAGEN:${{ github.sha }}" \
+            -p imagen="$IMAGEN:${{ github.sha }}" origenes="${ORIGENES:-*}" \
             --query properties.outputs.apiUrl.value -o tsv)
           echo "::notice::API en $URL"
           echo "URL=$URL" >> "$GITHUB_ENV"
