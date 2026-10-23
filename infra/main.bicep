@@ -37,8 +37,8 @@ resource api 'Microsoft.App/containerApps@2024-03-01' = {
           name: 'api'
           image: imagen
           resources: {
-            cpu: json('1.0')
-            memory: '2Gi'
+            cpu: json('2.0')
+            memory: '4Gi'
           }
           env: [
             {
@@ -52,6 +52,10 @@ resource api 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'PROCESOS_SIMULACION'
               value: '2'
+            }
+            {
+              name: 'SIMULACIONES_SIMULTANEAS'
+              value: '10'
             }
           ]
         }
