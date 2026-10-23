@@ -57,7 +57,7 @@ class LimiteSimulaciones:
             return
         if self.activas >= self.maximo:
             respuesta = JSONResponse(
-                {"detail": "Hay otra simulacion en curso, intenta en unos segundos."},
+                {"detail": f"Ya hay {self.maximo} simulaciones en curso, intenta en unos segundos."},
                 status_code=429)
             await respuesta(scope, receive, send)
             return
