@@ -102,7 +102,7 @@ jobs:
       - name: Desplegar
         if: steps.secretos.outputs.listo == 'true'
         run: |
-          ORIGENES=$(az staticwebapp list -g "$RG" --query "[].defaultHostname" -o tsv | sed 's|^|https://|' | paste -sd, -)
+          ORIGENES=$(az staticwebapp list -g "$RG" --query "[?starts_with(defaultHostname, '$SWA')].defaultHostname" -o tsv | sed 's|^|https://|' | paste -sd, -)
           echo "::notice::Origenes permitidos ${ORIGENES:-*}"
           URL=$(az deployment group create -g "$RG" -n ceneval-api -f infra/main.bicep \
             -p imagen="$IMAGEN:${{ github.sha }}" origenes="${ORIGENES:-*}" \

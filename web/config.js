@@ -1,1 +1,1 @@
-window.CONFIG = { api: "http://127.0.0.1:8000" };
+window.CONFIG = { api: "https://ceneval-api.calmpebble-967ef7c8.southcentralus.azurecontainerapps.io" };
